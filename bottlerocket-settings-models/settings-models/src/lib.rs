@@ -15,7 +15,7 @@ settings structures that helpfully validate inputs on deserialize.
 */
 
 mod boot;
-mod kubernetes;
+pub mod kubernetes;
 
 // Expose types for creating new settings structs
 pub use bottlerocket_model_derive as model_derive;

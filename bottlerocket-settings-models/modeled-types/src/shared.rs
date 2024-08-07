@@ -1181,6 +1181,47 @@ mod test_positive_integer {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// Input value that needs to be a positive integer, but should not be greater
+/// than an i32::MAX.
+#[derive(Clone, Debug, PartialEq, Scalar)]
+pub struct PositiveInteger {
+    inner: i32,
+}
+
+impl Validate for PositiveInteger {
+    fn validate<I: Into<i32>>(input: I) -> Result<PositiveInteger, ValidationError> {
+        let inner: i32 = input.into();
+        if inner < 1 {
+            Err(ValidationError::new(
+                "number must be great than or equal to 1",
+            ))
+        } else {
+            Ok(Self { inner })
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_nonzero_integer {
+    use super::PositiveInteger;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_positive_integer() {
+        assert!(PositiveInteger::try_from(1).is_ok());
+        assert!(PositiveInteger::try_from(i32::MAX).is_ok());
+        assert!(PositiveInteger::try_from(42).is_ok());
+    }
+
+    #[test]
+    fn invalid_positive_integer() {
+        assert!(PositiveInteger::try_from(i32::MIN).is_err());
+        assert!(PositiveInteger::try_from(-1).is_err());
+        assert!(PositiveInteger::try_from(0).is_err());
+    }
+}
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// KernelCpuSetValue represents a string that contains a valid Kernel CpuSet Value from
 /// here: https://man7.org/linux/man-pages/man7/cpuset.7.html#FORMATS. This matches the
 /// logic from https://github.com/kubernetes/utils/blob/d93618cff8a22d3aea7bf78d9d528fd859720c2d/cpuset/cpuset.go#L203

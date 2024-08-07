@@ -14,6 +14,7 @@ use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
 use std::net::IpAddr;
 
+use crate::PositiveInteger;
 use crate::SingleLineString;
 
 // Declare constant values usable by any type
@@ -1455,6 +1456,8 @@ pub struct NvidiaDevicePluginSettings {
     pass_device_specs: bool,
     device_id_strategy: NvidiaDeviceIdStrategy,
     device_list_strategy: NvidiaDeviceListStrategy,
+    max_sharing_per_gpu: PositiveInteger,
+    rename_shared_gpu: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -1477,7 +1480,7 @@ mod tests {
 
     #[test]
     fn test_serde_k8s_device_plugins() {
-        let test_json = r#"{"nvidia":{"pass-device-specs":true,"device-id-strategy":"index","device-list-strategy":"volume-mounts"}}"#;
+        let test_json = r#"{"nvidia":{"pass-device-specs":true,"device-id-strategy":"index","device-list-strategy":"volume-mounts","max-sharing-per-gpu":10,"rename-shared-gpu":true}}"#;
 
         let device_plugins: K8sDevicePluginsSettings = serde_json::from_str(test_json).unwrap();
         assert_eq!(
@@ -1487,6 +1490,8 @@ mod tests {
                     pass_device_specs: Some(true),
                     device_id_strategy: Some(NvidiaDeviceIdStrategy::Index),
                     device_list_strategy: Some(NvidiaDeviceListStrategy::VolumeMounts),
+                    max_sharing_per_gpu: Some(PositiveInteger::try_from(10).unwrap()),
+                    rename_shared_gpu: Some(true),
                 }),
             }
         );
@@ -1497,7 +1502,7 @@ mod tests {
 
     #[test]
     fn test_serde_nvidia_device_plugins() {
-        let test_json = r#"{"pass-device-specs":false,"device-id-strategy":"uuid","device-list-strategy":"envvar"}"#;
+        let test_json = r#"{"pass-device-specs":false,"device-id-strategy":"uuid","device-list-strategy":"envvar","max-sharing-per-gpu":10,"rename-shared-gpu":false}"#;
         let nvidia_device_plugins: NvidiaDevicePluginSettings =
             serde_json::from_str(test_json).unwrap();
         assert_eq!(
@@ -1506,10 +1511,18 @@ mod tests {
                 pass_device_specs: Some(false),
                 device_id_strategy: Some(NvidiaDeviceIdStrategy::Uuid),
                 device_list_strategy: Some(NvidiaDeviceListStrategy::Envvar),
+                max_sharing_per_gpu: Some(PositiveInteger::try_from(10).unwrap()),
+                rename_shared_gpu: Some(false),
             }
         );
 
         let results = serde_json::to_string(&nvidia_device_plugins).unwrap();
         assert_eq!(results, test_json);
+    }
+    #[test]
+    fn test_invalid_max_sharing_per_gpu() {
+        let test_json = r#"{"pass-device-specs":false,"device-id-strategy":"uuid","device-list-strategy":"envvar","max-sharing-per-gpu":0,"rename-shared-gpu":false}"#;
+        let result: Result<NvidiaDevicePluginSettings, _> = serde_json::from_str(test_json);
+        assert!(result.is_err(), "The JSON should not be parsed successfully as it contains an invalid value for 'max-sharing-per-gpu'.");
     }
 }

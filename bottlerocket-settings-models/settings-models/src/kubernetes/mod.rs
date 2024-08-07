@@ -24,6 +24,12 @@ use bottlerocket_modeled_types::{
     TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
+// Feature flags
+#[cfg(feature = "nvidia-device-plugin")]
+pub const NVIDIA_DEVICE_PLUGIN_FEATURE_ENABLED: bool = true;
+#[cfg(not(feature = "nvidia-device-plugin"))]
+pub const NVIDIA_DEVICE_PLUGIN_FEATURE_ENABLED: bool = false;
+
 // Kubernetes static pod manifest settings
 #[model]
 pub struct StaticPod {
